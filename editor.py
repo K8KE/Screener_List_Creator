@@ -22,12 +22,12 @@ BGC = "Last BGC Status"
 
 
 # OPEN FILE
-# filepath = input("Enter name of today's file: ")
-filepath = "data/data (33).xlsx"
+filepath = input("Enter name of today's file: ")
+fullpath = os.path.join("data", filepath)
 with warnings.catch_warnings(record=True):
     warnings.simplefilter("always")
     original_sheet = pd.read_excel(
-        filepath, 
+        fullpath, 
         engine="openpyxl")
 
 # FORMAT COLUMNS
@@ -78,8 +78,10 @@ for index, row in original_sheet.iterrows():
 
     # READY TO VOLUNTEER
     new_volunteer = row[CURRENT_STATUS] == "Prospective Volunteer"
-    not_intaked = pd.isnull(row[INTAKE])
-    not_ready = new_volunteer and not_intaked
+    intaked = not pd.isnull(row[INTAKE])
+    if row["Intake Progress Status"] == "Passed to National Headquarters" or row["Intake Progress Status"] == "Passed to Regional Volunteer Services":
+        intaked = True
+    not_ready = new_volunteer and not intaked
 
     if is_closed:
 
@@ -129,9 +131,10 @@ for index, row in original_sheet.iterrows():
 
 
 # MATCH EXISTING VOLUNTEER / SCREENER PAIRS
-# filepath2 = input("Enter name of yesterday's file: ")
-filepath2 = "data/Screening List 01-31-2022.xlsx"
-yesterday_sheet = pd.read_excel(filepath2)
+filepath2 = input("Enter name of yesterday's file: ")
+fullpath2 = os.path.join("data", filepath2)
+# filepath2 = "data/Screening List 01-31-2022.xlsx"
+yesterday_sheet = pd.read_excel(fullpath2)
 
 
 # BUILD SCREENER MAP
@@ -157,7 +160,10 @@ for index, row in original_sheet.iterrows():
     if name in screener_map:
         original_sheet.at[index, SCREENER] = screener_map[name]["screener"]
         if position in screener_map[name]:
-            original_sheet.at[index, DATE] = screener_map[name][position].strftime("%m/%d/%Y")
+            try:
+                original_sheet.at[index, DATE] = screener_map[name][position].strftime("%m/%d/%Y")
+            except AttributeError:
+                continue
 
 
 
@@ -167,7 +173,7 @@ foldername = str(today.strftime("%m-%d-%Y"))
 if not os.path.isdir(foldername):
     os.mkdir(foldername)
 
-today_sheetname = "Screener List " + str(today.strftime("%m-%d-%Y")) + ".xlsx"
+today_sheetname = "LEAD Screener List " + str(today.strftime("%m-%d-%Y")) + ".xlsx"
 
 # PUT UNASSIGNED AT TOP
 original_sheet = original_sheet.sort_values(by=[SCREENER])
