@@ -1,7 +1,7 @@
 import warnings
 import pandas as pd
 import os
-from datetime import datetime
+from datetime import datetime, date
 
 
 # DATE = "Date"
@@ -19,26 +19,42 @@ IS_RECRUITING = "Global Is Recruiting"
 INTAKE = "Intake Passed To Region"
 
 BGC = "Last BGC Status"
+DIVISION = "Division Name"
+
+today = date.today()
+
+new_data = ""
+last_list = ""
+
+cwd = os.getcwd()
+for filename in os.listdir(os.path.join(cwd, "data")):
+    if filename.startswith("data"): 
+        new_data = filename
+    elif filename.startswith("Screen"):
+        last_list = filename
+
+if not new_data or not last_list:
+    new_data = input("Enter name of today's file: ")
+    last_list = input("Enter name of yesterday's file: ")
 
 
-# OPEN FILE
-filepath = input("Enter name of today's file: ")
-fullpath = os.path.join("data", filepath)
+# OPEN FILES
+new_data_path = os.path.join("data", new_data)
 with warnings.catch_warnings(record=True):
     warnings.simplefilter("always")
     original_sheet = pd.read_excel(
-        fullpath, 
+        new_data_path, 
         engine="openpyxl")
+
+last_list_path = os.path.join("data", last_list)
+yesterday_sheet = pd.read_excel(last_list_path)
 
 # FORMAT COLUMNS
 datefields = ["Intake Application Date", "Intake Passed To Region", "Last BGC Created", "Submission Date"]
 for field in datefields:
     original_sheet[field] = original_sheet[field].dt.strftime('%m/%d/%Y')
 
-try:
-    original_sheet = original_sheet.drop(["Service Name"])
-except KeyError:
-    pass
+original_sheet = original_sheet.drop(["Service Name"], axis=1)
 
 # ADD COLUMNS
 for index, column in enumerate([DATE, SCREENER, COLOR, INFO]):
@@ -67,9 +83,6 @@ for index, row in original_sheet.iterrows():
         delete_indices.append(index)
         wrong_region = wrong_region.append(row, ignore_index=True)
         continue
-
-    # if row[BGC] == "Agreed":
-    #     bgc_agreed.append(row[VOLUNTEER_NAME])
     
     # IS OPEN POSITION
     not_recruiting = row[IS_RECRUITING] == "No"
@@ -104,18 +117,38 @@ original_sheet = original_sheet.drop(delete_indices)
 
 # ASSIGN BASED ON ROLE
 
-lesslee = ["Employee", "Inactive Prospective Volunteer", "On-Hold General Volunteers"]
+lesslee = [
+    "Employee", 
+    "Inactive Prospective Volunteer",
+    "On-Hold General Volunteers",
+    "AmeriCorps"
+]
+kate = [
+    "Disaster Event Based Volunteers"
+]
+US_divisions = [
+    "ARC National Operations Division",
+    "Central Atlantic Division",
+    "North Central Division",
+    "Northeast Division",
+    "Pacific Division",
+    "Southeast and Caribbean Division",
+    "Southwest and Rocky Mountains Division"
+]
 
 for index, row in original_sheet.iterrows():
 
     position = row[POSITION_NAME]
-
-    international = position.startswith(international_prefix)
     
-    if international:
+    if position.startswith(international_prefix):
         original_sheet.at[index, COLOR] = "ISD - R&R"
-    
-    if row[CURRENT_STATUS] == "Disaster Event Based Volunteers":
+
+    if row[DIVISION] == "ARC National Operations Division":
+        original_sheet.at[index, SCREENER] = "Lesslee"
+    elif row[DIVISION] not in US_divisions:
+        original_sheet.at[index, INFO] = "LOCATION"
+
+    if row[CURRENT_STATUS] in kate:
         original_sheet.at[index, SCREENER] = "Kate"
     elif row[CURRENT_STATUS] in lesslee:
         original_sheet.at[index, SCREENER] = "Lesslee"
@@ -130,11 +163,7 @@ for index, row in original_sheet.iterrows():
         bgc_agreed.append(row[VOLUNTEER_NAME])
 
 
-# MATCH EXISTING VOLUNTEER / SCREENER PAIRS
-filepath2 = input("Enter name of yesterday's file: ")
-fullpath2 = os.path.join("data", filepath2)
-# filepath2 = "data/Screening List 01-31-2022.xlsx"
-yesterday_sheet = pd.read_excel(fullpath2)
+
 
 
 # BUILD SCREENER MAP
@@ -153,21 +182,27 @@ for index, row in yesterday_sheet.iterrows():
             position: date
         }
 
+today_string = str(today.strftime("%m/%d/%Y"))
+
+
 # IF NEW NAME IN YESTERDAY'S LIST, ASSIGN SAME SCREENER
 for index, row in original_sheet.iterrows():
     name = row[VOLUNTEER_NAME]
     position = row[POSITION_NAME]
+    date_set = False
     if name in screener_map:
         original_sheet.at[index, SCREENER] = screener_map[name]["screener"]
         if position in screener_map[name]:
             try:
                 original_sheet.at[index, DATE] = screener_map[name][position].strftime("%m/%d/%Y")
+                date_set = True
             except AttributeError:
-                continue
+                date_set = False
+    
+    if not date_set:
+        original_sheet.at[index, DATE] = today_string
+    
 
-
-
-today = date.today()
 foldername = str(today.strftime("%m-%d-%Y"))
 
 if not os.path.isdir(foldername):
