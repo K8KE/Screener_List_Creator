@@ -33,11 +33,11 @@ different = [
     ]
 
 # filepath = input("Enter name of automated file: ")
-filepath = "result.xlsx"
+filepath = "02-13-2022/LEAD Screener List 02-13-2022.xlsx"
 automated_sheet = pd.read_excel(filepath)
 
 # filepath2 = input("Enter name of manually created file: ")
-filepath = "data/Screener List 02-02-2022.xlsx"
+filepath = "data/Screener List 02-09-2022.xlsx"
 manual_sheet = pd.read_excel(filepath)
 
 name_to_screener = {}

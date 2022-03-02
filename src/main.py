@@ -1,4 +1,7 @@
-from helper import *
+from input_output import *
+from rules import *
+from same_screener import *
+from divide_names import *
 
 # download sheets and do some formatting
 original_sheet, yesterday_sheet = open_files()
@@ -12,4 +15,10 @@ sheet_2, wrong_region, bgc_agreed = auto_assignments(sheet_1, wrong_region)
 screener_map = build_screener_map(yesterday_sheet)
 sheet_3 = apply_same_screener(sheet_2, screener_map)
 
-output_sheets(sheet_3, wrong_region, bgc_agreed)
+screener_limits, weekly_limits = create_roster_limits()
+sheet_4 = assign_remaining(sheet_3, screener_limits, weekly_limits)
+
+workload = get_screener_workload(sheet_4)
+print(workload)
+
+output_sheets(sheet_4, wrong_region, bgc_agreed)
