@@ -1,6 +1,6 @@
 import warnings
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date
 from typing import Tuple, Set, List, Dict, Union
 
 
@@ -22,6 +22,14 @@ BGC = "Last BGC Status"
 REGION = "Region Name"
 
 international_prefix = "NHQ:ISD - R&R:"
+
+all_screeners = {
+        'Jake', 'Melinda', 'Reshma', 'Manuel', 'Wajiha', 
+        'Adrienne', 'Lynette', 'Karina', 'Karen',
+        'Younos', 'Kate', 'Brittany', 'Guy', 'Danielle', 
+        'Kimberly', 'Bella', 'Maia', 'Maria', 
+        'Elizabeth', 'Lesslee', 'Annie', 'Denair', 'Anchita'
+    }
 
 
 def create_roster_limits() -> pd.DataFrame:
@@ -64,14 +72,11 @@ def create_roster_limits() -> pd.DataFrame:
 
 
 def get_screener_workload(original_sheet):
-    screener_list = {
-        'Jake', 'Melinda', 'Reshma', 'Manuel', 'Wajiha', 
-        'Adrienne', 'Lynette', 'Karina', 'Karen', 'Jacqueline', 
-        'Younos', 'Kate', 'Brittany', 'Guy', 'Danielle', 
-        'Nandhini', 'Kimberly', 'Bella', 'Maia', 'Maria', 
-        'Elizabeth', 'Lesslee', 'Annie', 'Denair', 'Anchita'
-    }
-    screener_names = {screener: set() for screener in screener_list}
+    today = date.today()
+    today_string = str(today.strftime("%m/%d/%Y"))
+    
+    names = {screener: 0 for screener in all_screeners}
+    new_names = {screener: 0 for screener in all_screeners}
 
     for _, row in original_sheet.iterrows():
 
@@ -81,15 +86,15 @@ def get_screener_workload(original_sheet):
 
         screener = screener.strip()
 
-        if screener not in screener_names:
+        if screener not in names:
             print("." + screener + ".")
             continue
-
-        volunteer = row[VOLUNTEER_NAME]
-        screener_names[screener].add(volunteer)
-
-    screener_counts = {screener: len(screener_names[screener]) for screener in screener_names}
-    return screener_counts
+        
+        names[screener] += 1
+        if (row["Assigned Date"] == today_string and pd.isnull(row["Progress Status"])):
+            new_names[screener] += 1
+        
+    return names, new_names
 
 
 def screener_limit_check(screener_limits):
@@ -110,7 +115,7 @@ def assign_remaining(
     screener_limits: Dict[str, Dict[str, Union[str, int]]],
     weekly_limits: List[str]) -> pd.DataFrame:
 
-    current_workload = get_screener_workload(original_sheet)
+    current_workload, _ = get_screener_workload(original_sheet)
 
     for name in weekly_limits:
         total_limit = screener_limits[name]["Limit"]
@@ -120,6 +125,12 @@ def assign_remaining(
             screener_limits[name]["Limit"] = total_limit - current_names
         else:
             del screener_limits[name]
+
+    for screener in all_screeners:
+        if screener not in screener_limits:
+            screener_limits[name]["Limit"] = 10
+
+    print(screener_limits)
 
     screener_limit_check(screener_limits)
     screeners = list(screener_limits.keys())
@@ -132,13 +143,18 @@ def assign_remaining(
             continue
 
         if not screeners:
-            print(screener_limits)
+            print('OVERLOAD')
             break
 
         name = row[VOLUNTEER_NAME]
 
         if name in assignments:
             assigned_screener = assignments[name]
+            try:
+                screeners.remove(assigned_screener)
+            except ValueError:
+                print("CHECK " + assigned_screener + " ASSIGNMENTS")
+            
         else:
             if row[INFO] == "BGC":
                 for screener in screeners:
@@ -151,13 +167,10 @@ def assign_remaining(
                 
             assignments[name] = assigned_screener
             
-            remaining = 10
-            if "Limit" in screener_limits[assigned_screener]:
-                remaining = screener_limits[assigned_screener]["Limit"] - 1
-                screener_limits[assigned_screener]["Limit"] = remaining
+        screener_limits[assigned_screener]["Limit"] -= 1
 
-            if remaining != 0:
-                screeners.append(assigned_screener)
+        if screener_limits[assigned_screener]["Limit"] > 0:
+            screeners.append(assigned_screener)
 
         original_sheet.at[index, SCREENER] = assigned_screener
 

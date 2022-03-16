@@ -18,7 +18,9 @@ sheet_3 = apply_same_screener(sheet_2, screener_map)
 screener_limits, weekly_limits = create_roster_limits()
 sheet_4 = assign_remaining(sheet_3, screener_limits, weekly_limits)
 
-workload = get_screener_workload(sheet_4)
-print(workload)
+names, new_names = get_screener_workload(sheet_4)
+print(names)
+print()
+print(new_names)
 
 output_sheets(sheet_4, wrong_region, bgc_agreed)
