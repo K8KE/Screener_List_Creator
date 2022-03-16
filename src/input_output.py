@@ -102,6 +102,7 @@ def output_sheets(
     wr_sheetname = "WR " + str(today.strftime("%m-%d-%Y")) + ".xlsx"
 
     # PUT UNASSIGNED AT TOP
+    original_sheet = original_sheet.sort_values(by=[VOLUNTEER_NAME])
     original_sheet = original_sheet.sort_values(by=[SCREENER])
     original_sheet.to_excel(os.path.join(foldername, today_sheetname))
 

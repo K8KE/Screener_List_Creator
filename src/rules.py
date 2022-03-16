@@ -41,7 +41,7 @@ def closed_and_wrong_region(original_sheet: pd.DataFrame) -> Tuple[pd.DataFrame,
         position = row[POSITION_NAME]
 
         # DELETE
-        if not position:
+        if not position or pd.isnull(row[VOLUNTEER_NAME]):
             delete_indices.append(index)
             continue
 
@@ -91,6 +91,7 @@ def auto_assignments(
     """
 
     wrong_region_names = set(wrong_region[VOLUNTEER_NAME].tolist())
+    name_to_screener = {"Jordan, Sara": "Kate"}
 
     to_lesslee = "Kate"
     lesslee = [
@@ -120,6 +121,9 @@ def auto_assignments(
             delete_indices_2.append(index)
             wrong_region = wrong_region.append(row, ignore_index=True)
             continue
+        
+        if row[VOLUNTEER_NAME].title() in name_to_screener:
+            original_sheet.at[index, SCREENER] = name_to_screener[row[VOLUNTEER_NAME].title()]
 
         if row[REGION] == "ARC National Operations":
             original_sheet.at[index, SCREENER] = to_lesslee

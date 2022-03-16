@@ -65,11 +65,11 @@ def create_roster_limits() -> pd.DataFrame:
 
 def get_screener_workload(original_sheet):
     screener_list = {
-        'Jake', 'Melinda', 'Xenia', 'Reshma', 'Manuel',
-        'Wajiha', 'Adrienne', 'Lynette', 'Karina', 'Karen',
-        'Jacqueline', 'Younos', 'Jawanza', 'Kate', 'Brittany',
-        'Guy', 'Danielle', 'Nandhini', 'Kimberly', 'Bella',
-        'Maia', 'Maria', 'Elizabeth', 'Lesslee'
+        'Jake', 'Melinda', 'Reshma', 'Manuel', 'Wajiha', 
+        'Adrienne', 'Lynette', 'Karina', 'Karen', 'Jacqueline', 
+        'Younos', 'Kate', 'Brittany', 'Guy', 'Danielle', 
+        'Nandhini', 'Kimberly', 'Bella', 'Maia', 'Maria', 
+        'Elizabeth', 'Lesslee', 'Annie', 'Denair', 'Anchita'
     }
     screener_names = {screener: set() for screener in screener_list}
 
