@@ -52,7 +52,7 @@ def build_screener_map(yesterday_sheet: pd.DataFrame) -> Dict[str, Dict[str, str
                 "screener": screener,
                 position: date
             }
-    print(screener_map)
+
     return screener_map
 
 

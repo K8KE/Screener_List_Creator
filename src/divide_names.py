@@ -24,12 +24,12 @@ REGION = "Region Name"
 international_prefix = "NHQ:ISD - R&R:"
 
 all_screeners = {
-        'Melinda', 'Manuel', 'Wajiha', 
+        'Melinda', 
         'Adrienne', 'Lynette', 'Karina',
         'Younos', 'Kate', 'Guy', 'Kimberly', 
         'Maia', 'Maria', 'Elizabeth', 
         'Lesslee', 'Annie', 'Anchita',
-        'Vanessa'
+        'Vanessa', 'Cherelle', 'Passha'
     }
 
 
