@@ -71,6 +71,7 @@ def preliminary_formatting(original_sheet: pd.DataFrame) -> pd.DataFrame:
 
     # FORMAT COLUMNS
     datefields = ["Intake Application Date", "Intake Passed To Region", "Last BGC Created", "Submission Date"]
+
     for field in datefields:
         original_sheet[field] = original_sheet[field].dt.strftime('%m/%d/%Y')
 
@@ -102,8 +103,7 @@ def output_sheets(
     wr_sheetname = "WR " + str(today.strftime("%m-%d-%Y")) + ".xlsx"
 
     # PUT UNASSIGNED AT TOP
-    original_sheet = original_sheet.sort_values(by=[VOLUNTEER_NAME])
-    original_sheet = original_sheet.sort_values(by=[SCREENER])
+    # original_sheet = original_sheet.sort_values(by=[VOLUNTEER_NAME, SCREENER])
     original_sheet.to_excel(os.path.join(foldername, today_sheetname))
 
     wrong_region = wrong_region[["Region Name", "Global Position Name", "Account Name", "Status Name (Current)", "Progress Status"]]

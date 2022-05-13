@@ -56,7 +56,8 @@ def closed_and_wrong_region(original_sheet: pd.DataFrame) -> Tuple[pd.DataFrame,
         # READY TO VOLUNTEER
         new_volunteer = row[CURRENT_STATUS] == "Prospective Volunteer"
         intaked = not pd.isnull(row[INTAKE])
-        if row["Intake Progress Status"] == "Passed to National Headquarters" or row["Intake Progress Status"] == "Passed to Regional Volunteer Services":
+        intake_status = str(row["Intake Progress Status"])
+        if intake_status == "Passed to National Headquarters" or intake_status == "Passed to Regional Volunteer Services" or intake_status.startswith("RVS"):
             intaked = True
         not_ready = new_volunteer and not intaked
 
@@ -91,22 +92,25 @@ def auto_assignments(
     """
 
     wrong_region_names = set(wrong_region[VOLUNTEER_NAME].tolist())
-    name_to_screener = {"Jordan, Sara": "Kate"}
 
-    to_lesslee = "Kate"
-    lesslee = [
+    to_kate = "Kate"
+    kate = [
+        "Disaster Event Based Volunteers",
         "Employee", 
         "Inactive Prospective Volunteer",
         "On-Hold General Volunteers",
         "AmeriCorps"
     ]
-    to_kate = "Kate"
-    kate = [
-        "Disaster Event Based Volunteers"
-    ]
-    kate_positions = [
-        "NHQ:ISD- R&R: Response Info Analyst Volunteer Support"
-    ]
+    
+    special_positions = {
+        "NHQ:ISD R&R Deployment Coordinator": "Vanessa"
+    }
+    name_to_screener = {}
+
+    bgc_regions = [
+        "Michigan Region", "Greater New York Region", 
+        "Eastern New York Region", "Western New York Region", 
+        "Kentucky Region"]
     non_US_region = [
         "Bagram AB", "Central Europe Region", 
         "Deployed Sites", "EuroMED", "Japan", 
@@ -114,6 +118,7 @@ def auto_assignments(
     ]
     bgc_agreed = []
     delete_indices_2 = []
+    
 
     for index, row in original_sheet.iterrows():
 
@@ -126,25 +131,31 @@ def auto_assignments(
             original_sheet.at[index, SCREENER] = name_to_screener[row[VOLUNTEER_NAME].title()]
 
         if row[REGION] == "ARC National Operations":
-            original_sheet.at[index, SCREENER] = to_lesslee
+            original_sheet.at[index, SCREENER] = to_kate
         elif row[REGION] in non_US_region:
             original_sheet.at[index, INFO] = "LOCATION"
 
         if row[CURRENT_STATUS] in kate:
             original_sheet.at[index, SCREENER] = to_kate
-        elif row[CURRENT_STATUS] in lesslee:
-            original_sheet.at[index, SCREENER] = to_lesslee
         elif row[CURRENT_STATUS] == "Biomed Event Based Volunteers":
             original_sheet.at[index, INFO] = "BIOMED"
-        if row[POSITION_NAME] in kate_positions:
-            original_sheet.at[index, SCREENER] = to_kate
+        if row[POSITION_NAME] in special_positions:
+            original_sheet.at[index, SCREENER] = special_positions[POSITION_NAME]
 
         if row[BGC] == "Review":
-            original_sheet.at[index, SCREENER] = to_lesslee
-        elif row[BGC] == "Processing" or row[BGC] == "Ready":
+            original_sheet.at[index, SCREENER] = to_kate
+        elif row[BGC] == "Ready":
+            if row["Region Name"] in bgc_regions:
+                original_sheet.at[index, INFO] = "BGC"
+            else:
+                original_sheet.at[index, SCREENER] = to_kate
+        elif row[BGC] == "Processing":
             original_sheet.at[index, INFO] = "BGC"
         elif row[BGC] == "Agreed":
             bgc_agreed.append(row[VOLUNTEER_NAME])
+
+        if row["Intake Progress Status"] == "Passed to Regional Department":
+            original_sheet.at[index, SCREENER] = to_kate
         
 
     original_sheet = original_sheet.drop(delete_indices_2)

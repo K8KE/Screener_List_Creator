@@ -24,11 +24,12 @@ REGION = "Region Name"
 international_prefix = "NHQ:ISD - R&R:"
 
 all_screeners = {
-        'Jake', 'Melinda', 'Reshma', 'Manuel', 'Wajiha', 
-        'Adrienne', 'Lynette', 'Karina', 'Karen',
-        'Younos', 'Kate', 'Brittany', 'Guy', 'Danielle', 
-        'Kimberly', 'Bella', 'Maia', 'Maria', 
-        'Elizabeth', 'Lesslee', 'Annie', 'Denair', 'Anchita'
+        'Melinda', 'Manuel', 'Wajiha', 
+        'Adrienne', 'Lynette', 'Karina',
+        'Younos', 'Kate', 'Guy', 'Kimberly', 
+        'Maia', 'Maria', 'Elizabeth', 
+        'Lesslee', 'Annie', 'Anchita',
+        'Vanessa'
     }
 
 
@@ -64,6 +65,8 @@ def create_roster_limits() -> pd.DataFrame:
         # screener_limits[screener]["Limit"] = 3
         if not pd.isnull(row["Limit"]):
             screener_limits[screener]["Limit"] = int(row["Limit"])
+        else:
+            screener_limits[screener]["Limit"] = 10
             
         if row["Limit On"] == "week":
             weekly_limits.append(screener)
@@ -91,17 +94,27 @@ def get_screener_workload(original_sheet):
             continue
         
         names[screener] += 1
-        if (row["Assigned Date"] == today_string and pd.isnull(row["Progress Status"])):
+        if (row[DATE] == today_string and pd.isnull(row["Progress Status"])):
             new_names[screener] += 1
         
     return names, new_names
 
 
+def create_workload_df(names, new_names):
+    new_dict = {}
+    for name, load in names.items():
+        new_dict[name] = {"Total": load}
+    
+    for name, load in new_names.items():
+        new_dict[name]["New"] = load
+
+    load_df = pd.DataFrame.from_dict(new_dict, orient='index')
+    return load_df
+
+
 def screener_limit_check(screener_limits):
     to_delete = []
     for name in screener_limits:
-        if "Limit" not in screener_limits[name]:
-            continue
 
         if screener_limits[name]["Limit"] <= 0:
             to_delete.append(name)
@@ -126,16 +139,12 @@ def assign_remaining(
         else:
             del screener_limits[name]
 
-    for screener in all_screeners:
-        if screener not in screener_limits:
-            screener_limits[name]["Limit"] = 10
-
-    print(screener_limits)
-
     screener_limit_check(screener_limits)
     screeners = list(screener_limits.keys())
 
     assignments = {}
+
+    original_sheet = original_sheet.sort_values(by='Color')
 
     for index, row in original_sheet.iterrows():
 
@@ -166,7 +175,7 @@ def assign_remaining(
                 assigned_screener = screeners.pop(0)
                 
             assignments[name] = assigned_screener
-            
+        
         screener_limits[assigned_screener]["Limit"] -= 1
 
         if screener_limits[assigned_screener]["Limit"] > 0:
@@ -175,7 +184,6 @@ def assign_remaining(
         original_sheet.at[index, SCREENER] = assigned_screener
 
     return original_sheet
-
 
 
 

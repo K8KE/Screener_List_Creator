@@ -52,7 +52,7 @@ def build_screener_map(yesterday_sheet: pd.DataFrame) -> Dict[str, Dict[str, str
                 "screener": screener,
                 position: date
             }
-
+    print(screener_map)
     return screener_map
 
 
@@ -75,11 +75,15 @@ def apply_same_screener(
         if name in screener_map:
             original_sheet.at[index, SCREENER] = screener_map[name]["screener"]
             if position in screener_map[name]:
-                try:
-                    original_sheet.at[index, DATE] = screener_map[name][position].strftime("%m/%d/%Y")
-                    date_set = True
-                except AttributeError:
-                    date_set = False
+                # print(screener_map[name][position])
+                original_sheet.at[index, DATE] = screener_map[name][position]
+                date_set = True
+                # try:
+                #     print(screener_map[name][position].strftime("%m/%d/%Y"))
+                #     original_sheet.at[index, DATE] = screener_map[name][position].strftime("%m/%d/%Y")
+                #     date_set = True
+                # except AttributeError:
+                #     date_set = False
         
         if not date_set:
             original_sheet.at[index, DATE] = today_string
